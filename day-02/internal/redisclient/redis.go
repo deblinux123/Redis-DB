@@ -27,7 +27,7 @@ func LoadConfig() (Config, error) {
 	}
 
 	cfg := Config{
-		Addr:     getEnv("REDIS_ADDR", "127.0.0.1"),
+		Addr:     getEnv("REDIS_ADDR", "127.0.0.1:6379"),
 		Password: os.Getenv("REDIS_PASSWORD"),
 		DB:       db,
 	}
