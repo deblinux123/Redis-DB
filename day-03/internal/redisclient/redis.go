@@ -73,7 +73,7 @@ func getEnv(key, fallbak string) string {
 	return fallbak
 }
 
-func NewClient(cfg Config) *redis.Client {
+func newClient(cfg Config) *redis.Client {
 	return redis.NewClient(&redis.Options{
 		Addr:         cfg.Addr,
 		Password:     cfg.Password,
@@ -85,7 +85,7 @@ func NewClient(cfg Config) *redis.Client {
 }
 
 func Connect(ctx context.Context, cfg Config) (*redis.Client, error) {
-	client := NewClient(cfg)
+	client := newClient(cfg)
 
 	if err := client.Ping(ctx).Err(); err != nil {
 		_ = client.Close()
