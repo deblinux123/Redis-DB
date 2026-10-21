@@ -16,82 +16,134 @@ func main() {
 		context.Background(),
 		10*time.Second,
 	)
+
 	defer cancel()
 
 	cfg, err := redisclient.LoadConfig()
+
 	if err != nil {
-		log.Fatalf("load Redis config: %v", err)
+		log.Fatalf("Load redis config: %v", err)
 	}
 
 	client, err := redisclient.Connect(ctx, cfg)
+
 	if err != nil {
-		log.Fatalf("connect to Redis: %v", err)
+		log.Fatalf("Connect ro redis: %v", err)
 	}
+
 	defer client.Close()
 
 	repo := userrepo.New(client)
 
 	user := userrepo.User{
-		ID:    "1001",
-		Name:  "Farid",
-		Email: "farid@example.com",
-		Age:   28,
-		City:  "Baku",
+		ID:    "1003",
+		Name:  "Asma",
+		Email: "Asma@gmail.com",
+		Age:   29,
+		City:  "Karaj",
 	}
 
-	// Clean up the previous demo user so the example is repeatable.
 	if err := repo.Delete(ctx, user.ID); err != nil &&
 		!errors.Is(err, userrepo.ErrUserNotFound) {
-		log.Fatalf("clean previous user: %v", err)
+		log.Fatalf("Clean previous user: %v", err)
 	}
 
-	// 1. Create user
+	// create user
 	if err := repo.Create(ctx, user); err != nil {
-		log.Fatalf("create user: %v", err)
+		log.Fatalf("Create user: %v", err)
 	}
+
 	fmt.Println("User created successfully")
 
-	// 2. Get complete profile
+	// get profile
 	got, err := repo.Get(ctx, user.ID)
+
 	if err != nil {
-		log.Fatalf("get user: %v", err)
+		log.Fatalf("Ge user: %v", err)
 	}
+
 	fmt.Printf("User: %+v\n", got)
 
-	// 3. Update one field
+	// update one field
 	if err := repo.UpdateField(
 		ctx,
 		user.ID,
 		"city",
-		"Tbilisi",
+		"KARAJ",
 	); err != nil {
-		log.Fatalf("update city: %v", err)
+		log.Fatalf("Update city: %v", err)
 	}
-	fmt.Println("City updated successfully")
 
-	// 4. Read the updated profile
+	fmt.Println("City updated successfully.")
+
+	// read the updated profile
 	got, err = repo.Get(ctx, user.ID)
-	if err != nil {
-		log.Fatalf("get updated user: %v", err)
-	}
-	fmt.Printf("Updated user: %+v\n", got)
 
-	// 5. Delete one field
-	if err := repo.DeleteField(ctx, user.ID, "email"); err != nil {
-		log.Fatalf("delete email: %v", err)
+	if err != nil {
+		log.Fatalf("Get update user: %v", err)
 	}
+
+	fmt.Printf("Updated user: %v\n", got)
+
+	// delete one filed
+	if err := repo.DeleteField(ctx, user.ID, "email"); err != nil {
+		log.Fatalf("Delete email: %v", err)
+	}
+
 	fmt.Println("Email field deleted")
 
-	// 6. Check the remaining Hash in Redis
-	fields, err := client.HGetAll(ctx, "user:"+user.ID).Result()
+	// check the remining Hash in Redis
+	fields, err := client.HGetAll(ctx, "user"+user.ID).Result()
+
 	if err != nil {
-		log.Fatalf("read raw hash: %v", err)
+		log.Fatalf("Read raw Hash: %v", err)
 	}
+
 	fmt.Printf("Remaining Redis fields: %v\n", fields)
 
-	// 7. Delete complete profile
+	// delete complite user profile
+
 	if err := repo.Delete(ctx, user.ID); err != nil {
-		log.Fatalf("delete user: %v", err)
+		log.Fatalf("Delete user: %v", err)
 	}
-	fmt.Println("User deleted successfully")
+
+	fmt.Println("User deleted successfully.")
+
+	user2 := userrepo.User{
+		ID:    "1005",
+		Name:  "Ali",
+		Email: "ali123@gmail.com",
+		Age:   33,
+		City:  "Tehran",
+	}
+
+	if err = repo.Delete(ctx, user2.ID); err != nil && !errors.Is(err, userrepo.ErrUserNotFound) {
+		log.Fatalf("Clean previous user: %v", err)
+	}
+
+	if err := repo.Create(ctx, user2); err != nil {
+		log.Fatalf("User 2 create: %v", err)
+	}
+
+	fmt.Println("User 2 created.")
+
+	// update the user 2 email
+	err = repo.UpdateField(ctx, user2.ID, "email", "ali-123321@email.com")
+
+	if err != nil {
+		log.Fatalf("Update email user 2: %v", err)
+	}
+
+	fmt.Println("User 2 email updated.")
+
+	count, err := client.HLen(ctx, "user:"+user2.ID).Result()
+
+	if err != nil {
+		log.Fatalf("Count user 2 fileds: %v", err)
+	}
+
+	fmt.Printf("User 2 fileds: %d\n", count)
+
+	fmt.Println(client.HExists(ctx, "user:"+user2.ID, "email"))
+
 }
