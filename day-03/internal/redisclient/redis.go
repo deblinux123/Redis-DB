@@ -66,7 +66,7 @@ func LoadConfig() (Config, error) {
 }
 
 func getEnv(key, fallbak string) string {
-	if value := os.Getenv(key); key != "" {
+	if value := os.Getenv(key); value != "" {
 		return value
 	}
 
