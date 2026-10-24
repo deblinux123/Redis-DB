@@ -59,4 +59,55 @@ func main() {
 	}
 
 	log.Println("Retrive value:", value)
+
+	if err := client.Del(ctx, "day05:tasks").Err(); err != nil {
+		log.Fatalf("Failed to delete: %v", err)
+	}
+
+	log.Println("Tasks Deleted.")
+
+	err = client.RPush(ctx, "day05:tasks", "generate-report", "send-email", "resize-image").Err()
+
+	if err != nil {
+		log.Fatalf("Failed to create tasks")
+	}
+
+	log.Println("Tasks are created.")
+
+	log.Println("Tasks:")
+
+	var tasks []string
+
+	tasks, err = client.LRange(ctx, "day05:tasks", 0, -1).Result()
+
+	if err != nil {
+		log.Fatalf("Failed to get tasks: %v", err)
+	}
+
+	for i, task := range tasks {
+		log.Printf("%d- %s", i, task)
+	}
+
+	processTask, err := client.LPop(ctx, "day05:tasks").Result()
+
+	if err != nil {
+		log.Fatalf("There is no task: %v", err)
+	}
+
+	log.Printf("Processed task: %s", processTask)
+
+	remain, err := client.LLen(ctx, "day05:tasks").Result()
+
+	if err != nil {
+		log.Fatalf("failed to get tasks")
+	}
+
+	log.Println("Remaining tasks:", remain)
+
+	var remainTasks []string
+	for _, task := range tasks {
+		remainTasks = append(remainTasks, task)
+	}
+
+	log.Println("Tasks left:", remainTasks)
 }
