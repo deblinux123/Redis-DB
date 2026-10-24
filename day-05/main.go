@@ -163,4 +163,96 @@ func main() {
 	}
 
 	log.Println("all users: ", allUsers)
+
+	if err := client.Del(ctx, "day05:leaderboard").Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Key is deleted.")
+
+	leaderBoard, err := client.ZAdd(
+		ctx,
+		"day05:leaderboard",
+		redis.Z{
+			Score:  190,
+			Member: "asma",
+		},
+		redis.Z{
+			Score:  223,
+			Member: "farid",
+		},
+		redis.Z{
+			Score:  123,
+			Member: "mobina",
+		},
+	).Result()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("added user to leader borad: %v", leaderBoard)
+
+	members, err := client.ZRevRangeWithScores(
+		ctx,
+		"day05:leaderboard",
+		0,
+		-1,
+	).Result()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("\n------ LeaderBoard -----")
+	for i, member := range members {
+		fmt.Printf("%d. %s -- %.0f Points\n", i+1, member.Member, member.Score)
+	}
+
+	inScore, err := client.ZIncrBy(
+		ctx,
+		"day05:leaderboard",
+		120,
+		"asma",
+	).Result()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	memberE, err := client.ZRevRank(
+		ctx,
+		"day05:leaderboard",
+		"farid",
+	).Result()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("farid new rank: ", memberE)
+	log.Println("farid new score: ", inScore)
+
+	fmt.Printf("\nFarid's new score: %.0f\n", inScore)
+
+	updatedMembers, err := client.ZRevRangeWithScores(
+		ctx,
+		"day05:leaderboard",
+		0,
+		-1,
+	).Result()
+
+	if err != nil {
+		log.Fatalf("Failed to get updated leaderboard: %v", err)
+	}
+
+	fmt.Println("\n--- UPDATED LEADERBOARD ---")
+
+	for i, member := range updatedMembers {
+		fmt.Printf("%d. %s — %.0f points\n",
+			i+1,
+			member.Member,
+			member.Score,
+		)
+	}
 }
