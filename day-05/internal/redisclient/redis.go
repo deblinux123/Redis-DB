@@ -91,5 +91,5 @@ func Connect(ctx context.Context, cfg Config) (*redis.Client, error) {
 		return nil, fmt.Errorf("Redis connection failed: %w", err)
 	}
 
-	return client, redis.Nil
+	return client, nil
 }
