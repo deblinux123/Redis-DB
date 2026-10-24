@@ -379,7 +379,7 @@ This Compose configuration is intended for local development, not an internet-fa
 - ✅ Day 02 — Redis Setup with Golang
 - ✅ Day 03 — Strings and Basic CRUD
 - ✅ Day 04 — Hashes and Structured Data
-- [ ] Day 05 — Lists, Sets, and Sorted Sets
+- ✅ Day 05 — Lists, Sets, and Sorted Sets
 - [ ] Day 06 — Expiration and Cache Design
 - [ ] Day 07 — Redis and REST APIs with Fiber
 - [ ] Day 08 — Transactions and Pipelining
