@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -119,4 +120,47 @@ func main() {
 	}
 
 	log.Println("Tasks left: ", remainTasks)
+
+	log.Println("Adding some users.")
+
+	if err := client.Del(ctx, "day05:users").Err(); err != nil {
+		log.Fatalf("Failed to delete users: %v", err)
+	}
+
+	log.Println("Users are deleted")
+
+	added, err := client.SAdd(ctx, "day05:users", "user-101", "user-102", "user-103").Result()
+
+	if err != nil {
+		log.Fatalf("Failed to add user: %v", err)
+	}
+
+	log.Printf("%d New User added", added)
+
+	fmt.Println("users:")
+	users, err := client.SMembers(ctx, "day05:users").Result()
+
+	if err != nil {
+		log.Fatalf("Failed to get users: %v", err)
+	}
+
+	for _, user := range users {
+		log.Println(user)
+	}
+
+	userExists, err := client.SIsMember(ctx, "day05:users", "user-102").Result()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("user-102 exists:", userExists)
+
+	allUsers, err := client.SCard(ctx, "day05:users").Result()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("all users: ", allUsers)
 }
