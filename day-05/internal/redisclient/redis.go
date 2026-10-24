@@ -32,7 +32,7 @@ func LoadConfig() (Config, error) {
 	}
 
 	cfg.DialTimeout, err = time.ParseDuration(
-		getEnv("REDIS_DIAL_TIMEOUT", "5S"),
+		getEnv("REDIS_DIAL_TIMEOUT", "5s"),
 	)
 
 	if err != nil || cfg.DialTimeout <= 0 {
@@ -40,7 +40,7 @@ func LoadConfig() (Config, error) {
 	}
 
 	cfg.ReadTimeout, err = time.ParseDuration(
-		getEnv("REDIS_READ_TIMEOUT", "3S"),
+		getEnv("REDIS_READ_TIMEOUT", "3s"),
 	)
 
 	if err != nil || cfg.ReadTimeout <= 0 {
@@ -48,7 +48,7 @@ func LoadConfig() (Config, error) {
 	}
 
 	cfg.WriteTimeout, err = time.ParseDuration(
-		getEnv("REDIS_WRITE_TIMEOUT", "3S"),
+		getEnv("REDIS_WRITE_TIMEOUT", "3s"),
 	)
 
 	if err != nil || cfg.WriteTimeout <= 0 {
