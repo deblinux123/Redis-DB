@@ -7,6 +7,7 @@ import (
 
 	"github.com/deblinux123/Redis-DB/day-05/internal/redisclient"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -90,11 +91,13 @@ func main() {
 
 	processTask, err := client.LPop(ctx, "day05:tasks").Result()
 
-	if err != nil {
-		log.Fatalf("There is no task: %v", err)
+	if err == redis.Nil {
+		log.Println("No Tasks availeable")
+	} else if err != nil {
+		log.Printf("Failed to process task: %v", err)
+	} else {
+		log.Printf("Processd task: %s", processTask)
 	}
-
-	log.Printf("Processed task: %s", processTask)
 
 	remain, err := client.LLen(ctx, "day05:tasks").Result()
 
@@ -104,10 +107,16 @@ func main() {
 
 	log.Println("Remaining tasks:", remain)
 
-	var remainTasks []string
-	for _, task := range tasks {
-		remainTasks = append(remainTasks, task)
+	remainTasks, err := client.LRange(
+		ctx,
+		"day05:tasks",
+		0,
+		-1,
+	).Result()
+
+	if err != nil {
+		log.Fatalf("Failed to get remaining tasks: %v", err)
 	}
 
-	log.Println("Tasks left:", remainTasks)
+	log.Println("Tasks left: ", remainTasks)
 }
