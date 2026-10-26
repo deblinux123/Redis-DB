@@ -5,7 +5,10 @@ import (
 	"log"
 	"time"
 
+	"github.com/deblinux123/Redis-DB/day-07/internal/handler"
 	"github.com/deblinux123/Redis-DB/day-07/internal/redisclient"
+	"github.com/deblinux123/Redis-DB/day-07/internal/repository"
+	"github.com/deblinux123/Redis-DB/day-07/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 )
@@ -37,6 +40,10 @@ func main() {
 
 	defer client.Close()
 
+	userRepo := repository.NewUserRepository(client)
+	userService := service.NewUserService(userRepo)
+	userHandler := handler.NewUserHandler(userService)
+
 	app := fiber.New()
 
 	app.Get("/health", func(c *fiber.Ctx) error {
@@ -59,6 +66,9 @@ func main() {
 			"Redis": "Connected.",
 		})
 	})
+
+	app.Post("/api/users", userHandler.Create)
+	app.Get("/api/users/:id", userHandler.GetUserByID)
 
 	log.Fatal(app.Listen(":8080"))
 }

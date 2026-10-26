@@ -60,7 +60,7 @@ func (h *UserHandler) GetUserByID(c *fiber.Ctx) error {
 
 		if errors.Is(err, redis.Nil) {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": service.ErrUserNotFound,
+				"error": "No User Found",
 			})
 		}
 
