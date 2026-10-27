@@ -70,5 +70,8 @@ func main() {
 	app.Post("/api/users", userHandler.Create)
 	app.Get("/api/users/:id", userHandler.GetUserByID)
 
+	app.Put("/api/users/:id", userHandler.Update)
+	app.Delete("/api/users/:id", userHandler.Delete)
+
 	log.Fatal(app.Listen(":8080"))
 }
