@@ -7,6 +7,7 @@ import (
 
 	"github.com/deblinux123/Redis-DB/day-07/internal/model"
 	"github.com/deblinux123/Redis-DB/day-07/internal/repository"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
@@ -46,4 +47,36 @@ func (s *UserService) GetUserByID(ctx context.Context, id string) (model.User, e
 	}
 
 	return user, nil
+}
+
+func (s *UserService) Update(ctx context.Context, user model.User) error {
+	user.Name = strings.TrimSpace(user.Name)
+
+	if user.ID == "" || user.Name == "" || user.Age <= 0 {
+		return ErrInvlaidUser
+	}
+
+	err := s.repo.Update(ctx, user)
+
+	if errors.Is(err, redis.Nil) {
+		return ErrUserNotFound
+	}
+
+	return err
+}
+
+func (s *UserService) Delete(ctx context.Context, id string) error {
+	id = strings.TrimSpace(id)
+
+	if id == "" {
+		return ErrInvlaidUser
+	}
+
+	err := s.repo.Delete(ctx, id)
+
+	if errors.Is(err, redis.Nil) {
+		return ErrUserNotFound
+	}
+
+	return err
 }
