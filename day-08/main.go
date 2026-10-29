@@ -209,7 +209,13 @@ func runTransacionERR(ctx context.Context, client *redis.Client) error {
 	}
 
 	for i, cmd := range cmds {
-		log.Printf("Command %d: %v", i+1, cmd.Err())
+		// log.Printf("Command %d: %v", i+1, cmd.Err())
+		if cmd.Err() != nil {
+			log.Printf("Command %d failed: %v\n", i+1, err)
+			continue
+		}
+
+		log.Printf("Command %d succeeded.\n", i+1)
 	}
 
 	counter, getErr := client.Get(ctx, counterKey).Int()
