@@ -8,6 +8,7 @@ import (
 
 	"github.com/deblinux123/Redis-DB/day-08/internal/redisclient"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -77,5 +78,53 @@ func main() {
 		}
 
 		log.Printf("%s = %s\n", key, value)
+	}
+
+	benchMarkCommands(ctx, client, 100000)
+}
+
+func benchMarkCommands(ctx context.Context, client *redis.Client, count int) {
+	start := time.Now()
+
+	for i := 0; i < count; i++ {
+		key := fmt.Sprintf("day08:bench:%d", i)
+
+		if err := client.Set(ctx, key, i, 0).Err(); err != nil {
+			log.Fatalf("Individual SET failed: %v", err)
+		}
+	}
+
+	individualDuration := time.Since(start)
+
+	pipe := client.Pipeline()
+
+	for i := 0; i < count; i++ {
+		key := fmt.Sprintf("day08:bench:%d", i)
+		pipe.Del(ctx, key)
+	}
+
+	if _, err := pipe.Exec(ctx); err != nil {
+		log.Fatalf("cleaninup failed: %v", err)
+	}
+
+	start = time.Now()
+
+	pipe = client.Pipeline()
+	for i := 0; i < count; i++ {
+		key := fmt.Sprintf("day08:bench:%d", i)
+		pipe.Set(ctx, key, i, 0)
+	}
+
+	if _, err := pipe.Exec(ctx); err != nil {
+		log.Fatalf("Pipeline SET failed: %v", err)
+	}
+
+	pipeLineDuration := time.Since(start)
+
+	log.Printf("Individual commands: %v\n", individualDuration)
+	log.Printf("Pipelined command: %v\n", pipeLineDuration)
+
+	if pipeLineDuration > 0 {
+		log.Printf("Speedup: %.2fx\n", float64(individualDuration)/float64(pipeLineDuration))
 	}
 }
