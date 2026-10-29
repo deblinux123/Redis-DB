@@ -89,6 +89,10 @@ func main() {
 	if err := runTransacionERR(ctx, client); err != nil {
 		log.Fatal(err)
 	}
+
+	if err := runWatchTest(ctx, client); err != nil {
+		log.Printf("Watch Test: %v\n", err)
+	}
 }
 
 func benchMarkCommands(ctx context.Context, client *redis.Client, count int) {
@@ -224,6 +228,50 @@ func runTransacionERR(ctx context.Context, client *redis.Client) error {
 	}
 
 	log.Printf("Final counter value: %v\n", counter)
+
+	return nil
+}
+
+func runWatchTest(ctx context.Context, client *redis.Client) error {
+
+	key := "day08:watch:balance"
+
+	if err := client.Set(ctx, key, 100, 0).Err(); err != nil {
+		return err
+	}
+
+	err := client.Watch(ctx, func(tx *redis.Tx) error {
+		balance, err := tx.Get(ctx, key).Int()
+
+		if err != nil {
+			return err
+		}
+
+		log.Printf("Balance befor transaction: %d\n", balance)
+
+		if balance < 80 {
+			return fmt.Errorf("insufficient balance.")
+		}
+
+		_, err = tx.TxPipelined(ctx, func(p redis.Pipeliner) error {
+			p.DecrBy(ctx, key, 80)
+			return nil
+		})
+
+		return nil
+	}, key)
+
+	if err != nil {
+		return fmt.Errorf("Watch transaction failed: %v", err)
+	}
+
+	balance, err := client.Get(ctx, key).Int()
+
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Balance after transaction: %d\n", balance)
 
 	return nil
 }
