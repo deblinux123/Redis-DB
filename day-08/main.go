@@ -81,6 +81,10 @@ func main() {
 	}
 
 	benchMarkCommands(ctx, client, 100000)
+
+	if err := runTransaction(ctx, client); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func benchMarkCommands(ctx context.Context, client *redis.Client, count int) {
@@ -127,4 +131,47 @@ func benchMarkCommands(ctx context.Context, client *redis.Client, count int) {
 	if pipeLineDuration > 0 {
 		log.Printf("Speedup: %.2fx\n", float64(individualDuration)/float64(pipeLineDuration))
 	}
+
+}
+
+func runTransaction(ctx context.Context, client *redis.Client) error {
+	faridKey := "day08:account:farid"
+	asmaKey := "day08:account:asma"
+
+	if err := client.Set(ctx, faridKey, 100, 0).Err(); err != nil {
+		return err
+	}
+
+	if err := client.Set(ctx, asmaKey, 50, 0).Err(); err != nil {
+		return err
+	}
+
+	// execute both
+	_, err := client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+		pipe.DecrBy(ctx, faridKey, 20)
+		pipe.IncrBy(ctx, asmaKey, 20)
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("transaction failed: %w", err)
+	}
+
+	faridBalance, err := client.Get(ctx, faridKey).Int()
+
+	if err != nil {
+		return err
+	}
+
+	asmaBalance, err := client.Get(ctx, asmaKey).Int()
+
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Farid's balance: %d\n", faridBalance)
+	log.Printf("Asma's balance: %d\n", asmaBalance)
+
+	return nil
 }
