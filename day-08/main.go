@@ -85,6 +85,10 @@ func main() {
 	if err := runTransaction(ctx, client); err != nil {
 		log.Fatal(err)
 	}
+
+	if err := runTransacionERR(ctx, client); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func benchMarkCommands(ctx context.Context, client *redis.Client, count int) {
@@ -172,6 +176,48 @@ func runTransaction(ctx context.Context, client *redis.Client) error {
 
 	log.Printf("Farid's balance: %d\n", faridBalance)
 	log.Printf("Asma's balance: %d\n", asmaBalance)
+
+	return nil
+}
+
+func runTransacionERR(ctx context.Context, client *redis.Client) error {
+	counterKey := "day08:transaction:counter"
+	nameKey := "day08:transaction:name"
+
+	if err := client.Set(ctx, counterKey, 10, 0).Err(); err != nil {
+		return err
+	}
+
+	if err := client.Set(ctx, nameKey, "farid", 0).Err(); err != nil {
+		return err
+	}
+
+	cmds, err := client.TxPipelined(ctx, func(p redis.Pipeliner) error {
+		p.Incr(ctx, counterKey)
+		p.Incr(ctx, nameKey)
+		p.Incr(ctx, counterKey)
+
+		return nil
+	})
+
+	log.Println("-\n--- Transaction Error Test ---")
+
+	if err != nil {
+		log.Printf("transaction returned an error: %v\n", err)
+	} else {
+		log.Println("transactoin returned no error.")
+	}
+
+	for i, cmd := range cmds {
+		log.Printf("Command %d: %v", i+1, cmd.Err())
+	}
+
+	counter, getErr := client.Get(ctx, counterKey).Int()
+	if getErr != nil {
+		return err
+	}
+
+	log.Printf("Final counter value: %v\n", counter)
 
 	return nil
 }
