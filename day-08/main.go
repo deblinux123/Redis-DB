@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -92,6 +93,10 @@ func main() {
 
 	if err := runWatchTest(ctx, client); err != nil {
 		log.Printf("Watch Test: %v\n", err)
+	}
+
+	if err := runWathConflictTest(ctx, client); err != nil {
+		log.Printf("Watch confilct test: %v", err)
 	}
 }
 
@@ -272,6 +277,53 @@ func runWatchTest(ctx context.Context, client *redis.Client) error {
 	}
 
 	log.Printf("Balance after transaction: %d\n", balance)
+
+	return nil
+}
+
+func runWathConflictTest(ctx context.Context, client *redis.Client) error {
+	key := "day08:watch:conflict"
+
+	if err := client.Set(ctx, key, 100, 0).Err(); err != nil {
+		return err
+	}
+
+	err := client.Watch(ctx, func(tx *redis.Tx) error {
+		balance, err := client.Get(ctx, key).Int()
+
+		if err != nil {
+			return err
+		}
+
+		log.Printf("Client A redis Balance: %d\n", balance)
+
+		if err := client.Set(ctx, key, 200, 0).Err(); err != nil {
+			return err
+		}
+
+		_, err = tx.TxPipelined(ctx, func(p redis.Pipeliner) error {
+			p.DecrBy(ctx, key, 50)
+			return nil
+		})
+
+		return err
+	}, key)
+
+	if errors.Is(err, redis.TxFailedErr) {
+		log.Println("Transaction aboted: watch key changed.")
+	} else if err != nil {
+		log.Printf("Watch test failed: %v", err)
+	} else {
+		log.Println("Transaction complited.")
+	}
+
+	finalBalance, err := client.Get(ctx, key).Int()
+
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Final Balance: %d\n", finalBalance)
 
 	return nil
 }
