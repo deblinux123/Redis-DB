@@ -35,7 +35,7 @@ func main() {
 		job := map[string]interface{}{
 			"event":    "paper.ingest",
 			"paper_id": "paper-" + time.Now().Format("150405") + "-" + string(rune('0'+i)),
-			"status":   "queues",
+			"status":   "queued",
 		}
 
 		id, err := client.XAdd(ctx, &redis.XAddArgs{
